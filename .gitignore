@@ -1,0 +1,16 @@
+.DS_Store
+.env
+.env.local
+*.log
+.vercel
+.idea/
+.vscode/
+
+# Local tooling
+.claude/
+.omc/
+
+# Specific to app/ (also has its own .gitignore)
+app/node_modules/
+app/.next/
+app/.env.local

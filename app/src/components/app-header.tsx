@@ -1,0 +1,44 @@
+'use client';
+
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { createSupabaseBrowserClient } from '@/lib/supabase-client';
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
+
+export function AppHeader({ email }: { email: string }) {
+  const router = useRouter();
+
+  async function handleLogout() {
+    const supabase = createSupabaseBrowserClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  }
+
+  return (
+    <header className="border-b bg-card">
+      <div className="container mx-auto flex h-14 items-center justify-between gap-4">
+        <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+          <span className="text-xl">⚽</span>
+          <span>Prode 2026</span>
+        </Link>
+        <nav className="hidden gap-4 text-sm sm:flex">
+          <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
+            Dashboard
+          </Link>
+          {/* Pantallas que aparecerán en fases siguientes:
+              <Link href="/eventos/1">Eventos</Link>
+              <Link href="/leaderboard">Leaderboard</Link> */}
+        </nav>
+        <div className="flex items-center gap-3">
+          <span className="hidden text-sm text-muted-foreground sm:inline">{email}</span>
+          <Button variant="ghost" size="sm" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Salir
+          </Button>
+        </div>
+      </div>
+    </header>
+  );
+}
