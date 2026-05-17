@@ -27,9 +27,10 @@ export function AppHeader({ email }: { email: string }) {
           <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
             Dashboard
           </Link>
-          {/* Pantallas que aparecerán en fases siguientes:
-              <Link href="/eventos/1">Eventos</Link>
-              <Link href="/leaderboard">Leaderboard</Link> */}
+          <Link href="/eventos/1" className="text-muted-foreground hover:text-foreground">
+            Evento 1
+          </Link>
+          {/* Próximas fases: <Link href="/leaderboard">Leaderboard</Link> */}
         </nav>
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-muted-foreground sm:inline">{email}</span>
