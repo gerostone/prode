@@ -1,7 +1,8 @@
+import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { requireUser } from '@/lib/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import type { Event, Team } from '@/lib/database.types';
+import type { Event } from '@/lib/database.types';
 import { Calendar, Trophy, Users, Shield } from 'lucide-react';
 
 export default async function DashboardPage() {
@@ -39,22 +40,37 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Próximo evento</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{nextEvent?.name ?? '—'}</div>
-            <p className="text-xs text-muted-foreground">
-              {nextEvent
-                ? nextEvent.status === 'open'
-                  ? 'Abierto ahora — entrá a pronosticar'
-                  : 'Próximamente'
-                : 'Todos los eventos terminaron'}
-            </p>
-          </CardContent>
-        </Card>
+        {nextEvent ? (
+          <Link href={`/eventos/${nextEvent.id}`} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
+            <Card className="h-full transition-colors hover:bg-accent/40">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Próximo evento</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-xl font-bold">{nextEvent.name}</div>
+                <p className="text-xs text-muted-foreground">
+                  {nextEvent.status === 'open'
+                    ? 'Abierto ahora — entrá a pronosticar →'
+                    : profile?.role === 'admin'
+                      ? 'En borrador — entrá para abrirlo →'
+                      : 'Próximamente'}
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        ) : (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Próximo evento</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-bold">—</div>
+              <p className="text-xs text-muted-foreground">Todos los eventos terminaron</p>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -99,9 +115,9 @@ export default async function DashboardPage() {
         </CardHeader>
         <CardContent>
           <ul className="space-y-2 text-sm">
-            <li>✅ <strong>Fase 0</strong> — Setup y auth con magic link</li>
+            <li>✅ <strong>Fase 0</strong> — Setup y auth con email + contraseña</li>
             <li>✅ <strong>Fase 1</strong> — Modelo de datos, RLS y seeds</li>
-            <li>⏳ <strong>Fase 2</strong> — Pantalla del Evento 1 (pronóstico inicial)</li>
+            <li>✅ <strong>Fase 2</strong> — Pantalla del Evento 1 (pronóstico inicial)</li>
             <li>⏳ <strong>Fase 3</strong> — Admin y carga manual de resultados</li>
             <li>⏳ <strong>Fase 4</strong> — Sync con Football-Data.org</li>
             <li>⏳ <strong>Fase 5</strong> — Eventos 2/3/4 (brackets)</li>
