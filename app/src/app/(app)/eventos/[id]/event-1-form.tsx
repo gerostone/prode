@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import type { Team } from '@/lib/database.types';
+import type { Team, Player } from '@/lib/database.types';
 import {
   emptyEvent1State,
   sectionToPicks,
@@ -17,14 +17,17 @@ import { GroupWinners } from './sections/group-winners';
 import { PlayoffTeams } from './sections/playoff-teams';
 import { Semifinalists } from './sections/semifinalists';
 import { FinalistAndChampion } from './sections/finalist-and-champion';
+import { TopScorer } from './sections/top-scorer';
 import type { SaveState } from './sections/save-chip';
 
 export function Event1Form({
   teams,
+  players,
   initialState,
   readOnly,
 }: {
   teams: Team[];
+  players: Player[];
   initialState: Event1State;
   readOnly: boolean;
 }) {
@@ -41,9 +44,11 @@ export function Event1Form({
     semifinalist: null,
     finalist: null,
     champion: null,
+    top_scorer: null,
   });
 
   const validation = useMemo(() => validateCoherence(state, { teams }), [state, teams]);
+  const teamsByCode = useMemo(() => new Map(teams.map((t) => [t.code, t])), [teams]);
   const complete = isComplete(state);
 
   function errorFor(kind: SectionKind): string | null {
@@ -130,6 +135,15 @@ export function Event1Form({
         championError={errorFor('champion')}
         readOnly={readOnly}
       />
+      <TopScorer
+        players={players}
+        teamsByCode={teamsByCode}
+        state={state}
+        onChange={(top_scorer) => update('top_scorer', { top_scorer })}
+        saveState={saveStates.top_scorer}
+        error={errorFor('top_scorer')}
+        readOnly={readOnly}
+      />
 
       <Card>
         <CardHeader>
@@ -142,6 +156,7 @@ export function Event1Form({
             <li>Semifinalistas: {state.semifinalist.length}/4</li>
             <li>Finalista: {state.finalist ? '✓' : '—'}</li>
             <li>Campeón: {state.champion ? '✓' : '—'}</li>
+            <li>Goleador: {state.top_scorer ? '✓' : '—'}</li>
           </ul>
           <Button disabled={!complete || !validation.ok || readOnly} className="w-full">
             {complete && validation.ok ? '✓ Pronóstico completo' : 'Completá todas las secciones para finalizar'}

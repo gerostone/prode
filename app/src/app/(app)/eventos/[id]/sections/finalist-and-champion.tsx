@@ -51,7 +51,7 @@ export function FinalistAndChampion({
       <RadioCard
         name="champion"
         title="5. Campeón"
-        points="1 × 400 pts"
+        points="1 × 200 pts"
         subtitle="El equipo que gana el Mundial."
         value={state.champion}
         options={semiTeams}

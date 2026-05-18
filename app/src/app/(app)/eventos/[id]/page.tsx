@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { loadEvent1State } from '@/lib/predictions';
-import type { Event, Team } from '@/lib/database.types';
+import type { Event, Team, Player } from '@/lib/database.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminToggle } from './admin-toggle';
 import { Event1Form } from './event-1-form';
@@ -15,9 +15,10 @@ export default async function EventoPage({ params }: { params: { id: string } })
 
   const supabase = createSupabaseServerClient();
 
-  const [eventRes, teamsRes, state] = await Promise.all([
+  const [eventRes, teamsRes, playersRes, state] = await Promise.all([
     supabase.from('events').select('*').eq('id', 1).single<Event>(),
     supabase.from('teams').select('*').order('group_code').order('name'),
+    supabase.from('players').select('*').order('display_order'),
     loadEvent1State(user.id),
   ]);
 
@@ -25,6 +26,7 @@ export default async function EventoPage({ params }: { params: { id: string } })
 
   const event = eventRes.data;
   const teams = (teamsRes.data ?? []) as Team[];
+  const players = (playersRes.data ?? []) as Player[];
   const isAdmin = profile.role === 'admin';
 
   const canEdit = event.status === 'open' || (event.status === 'draft' && isAdmin);
@@ -56,6 +58,7 @@ export default async function EventoPage({ params }: { params: { id: string } })
       {(canEdit || isReadOnly) && (
         <Event1Form
           teams={teams}
+          players={players}
           initialState={state}
           readOnly={isReadOnly}
         />
