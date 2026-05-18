@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import type { Route } from 'next';
 import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
+import type { UserRole } from '@/lib/database.types';
 
-export function AppHeader({ email }: { email: string }) {
+export function AppHeader({ email, role }: { email: string; role: UserRole | null }) {
   const router = useRouter();
 
   async function handleLogout() {
@@ -30,6 +32,11 @@ export function AppHeader({ email }: { email: string }) {
           <Link href="/eventos/1" className="text-muted-foreground hover:text-foreground">
             Evento 1
           </Link>
+          {role === 'admin' && (
+            <Link href={"/admin" as Route} className="text-muted-foreground hover:text-foreground">
+              Admin
+            </Link>
+          )}
           {/* Próximas fases: <Link href="/leaderboard">Leaderboard</Link> */}
         </nav>
         <div className="flex items-center gap-3">
