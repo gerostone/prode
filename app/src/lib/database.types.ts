@@ -42,6 +42,7 @@ export interface Team {
   crest_url: string | null;
   fifa_ranking: number | null;
   group_code: string | null;
+  group_position: number | null;
   external_id: number | null;
   eliminated_at_stage: string | null;
 }
@@ -51,6 +52,7 @@ export interface Player {
   full_name: string;
   team_code: string;
   display_order: number;
+  is_top_scorer: boolean;
   created_at: string;
 }
 

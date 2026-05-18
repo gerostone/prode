@@ -17,6 +17,7 @@ function makeTeams(): Team[] {
       crest_url: null,
       fifa_ranking: null,
       group_code: g,
+      group_position: null,
       external_id: null,
       eliminated_at_stage: null,
     })),
