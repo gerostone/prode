@@ -6,14 +6,19 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { requireUser } from '@/lib/auth';
 import { GROUP_CODES, SECTION_KINDS, type GroupCode } from '@/lib/event1-types';
 
-const pickSchema = z.object({
-  team_code: z.string().min(1),
-  meta: z
-    .object({
-      group_code: z.enum(GROUP_CODES as [GroupCode, ...GroupCode[]]).optional(),
-    })
-    .optional(),
-});
+const pickSchema = z
+  .object({
+    team_code: z.string().min(1).optional(),
+    player_id: z.number().int().positive().optional(),
+    meta: z
+      .object({
+        group_code: z.enum(GROUP_CODES as [GroupCode, ...GroupCode[]]).optional(),
+      })
+      .optional(),
+  })
+  .refine((p) => p.team_code !== undefined || p.player_id !== undefined, {
+    message: 'pick debe tener team_code o player_id',
+  });
 
 const saveSectionSchema = z.object({
   kind: z.enum(SECTION_KINDS),
@@ -42,6 +47,13 @@ export async function saveSection(input: z.infer<typeof saveSectionSchema>) {
     return { error: 'El evento no está abierto.' };
   }
 
+  // Validación per-kind: top_scorer requiere player_id; el resto requiere team_code.
+  const needsPlayerId = parsed.data.kind === 'top_scorer';
+  const wrong = parsed.data.picks.some((p) =>
+    needsPlayerId ? !p.player_id : !p.team_code,
+  );
+  if (wrong) return { error: 'Pick no coincide con el kind de la sección.' };
+
   // Replace-by-kind: delete + insert
   const { error: dErr } = await supabase
     .from('predictions')
@@ -59,7 +71,8 @@ export async function saveSection(input: z.infer<typeof saveSectionSchema>) {
       user_id: user.id,
       event_id: 1,
       kind: parsed.data.kind,
-      team_code: p.team_code,
+      team_code: p.team_code ?? null,
+      player_id: p.player_id ?? null,
       meta: p.meta ?? {},
     }));
     const { error: iErr } = await supabase.from('predictions').insert(rows);
