@@ -18,7 +18,8 @@ export type PredictionKind =
   | 'r16_winner'
   | 'r16_outcome'
   | 'qf_winner'
-  | 'qf_outcome';
+  | 'qf_outcome'
+  | 'top_scorer';
 
 export interface Profile {
   id: string;
@@ -43,6 +44,14 @@ export interface Team {
   group_code: string | null;
   external_id: number | null;
   eliminated_at_stage: string | null;
+}
+
+export interface Player {
+  id: number;
+  full_name: string;
+  team_code: string;
+  display_order: number;
+  created_at: string;
 }
 
 export interface Event {
@@ -91,6 +100,7 @@ export interface Prediction {
   kind: PredictionKind;
   team_code: string | null;
   match_id: number | null;
+  player_id: number | null;
   outcome: MatchOutcome | null;
   meta: Record<string, unknown>;
   is_correct: boolean | null;
