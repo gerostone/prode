@@ -16,6 +16,7 @@ export type ValidationErrors = {
   semifinalist?: string;
   finalist?: string;
   champion?: string;
+  top_scorer?: string;
 };
 
 export type ValidationResult =
@@ -93,7 +94,8 @@ export function isComplete(state: Event1State): boolean {
     state.playoff_team.length === 32 &&
     state.semifinalist.length === 4 &&
     Boolean(state.finalist) &&
-    Boolean(state.champion)
+    Boolean(state.champion) &&
+    state.top_scorer !== null
   );
 }
 

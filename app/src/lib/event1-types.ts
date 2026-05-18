@@ -3,11 +3,12 @@ import type { PredictionKind } from './database.types';
 export type GroupCode = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L';
 export const GROUP_CODES: GroupCode[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 
-export const SECTION_KINDS = ['group_winner', 'playoff_team', 'semifinalist', 'finalist', 'champion'] as const;
+export const SECTION_KINDS = ['group_winner', 'playoff_team', 'semifinalist', 'finalist', 'champion', 'top_scorer'] as const;
 export type SectionKind = (typeof SECTION_KINDS)[number];
 
 export interface Pick {
-  team_code: string;
+  team_code?: string;
+  player_id?: number;
   meta?: { group_code?: GroupCode };
 }
 
@@ -17,6 +18,7 @@ export interface Event1State {
   semifinalist: string[];
   finalist: string | null;
   champion: string | null;
+  top_scorer: number | null;
 }
 
 export function emptyEvent1State(): Event1State {
@@ -26,6 +28,7 @@ export function emptyEvent1State(): Event1State {
     semifinalist: [],
     finalist: null,
     champion: null,
+    top_scorer: null,
   };
 }
 
@@ -43,6 +46,8 @@ export function sectionToPicks(state: Event1State, kind: SectionKind): Pick[] {
       return state.finalist ? [{ team_code: state.finalist }] : [];
     case 'champion':
       return state.champion ? [{ team_code: state.champion }] : [];
+    case 'top_scorer':
+      return state.top_scorer !== null ? [{ player_id: state.top_scorer }] : [];
   }
 }
 

@@ -115,6 +115,7 @@ describe('validateCoherence — finalist & champion', () => {
     s.semifinalist = ['A1', 'B1', 'C1', 'D1'];
     s.finalist = 'A1';
     s.champion = 'B1';
+    s.top_scorer = 1;
     const res = validateCoherence(s, ctx);
     expect(res.ok).toBe(true);
   });
@@ -125,13 +126,42 @@ describe('isComplete', () => {
     expect(isComplete(emptyEvent1State())).toBe(false);
   });
 
-  it('true when 12/32/4/1/1 filled', () => {
+  it('true when 12/32/4/1/1/1 filled', () => {
     const s = emptyEvent1State();
     for (const g of GROUP_CODES) s.group_winner[g] = `${g}1`;
     s.playoff_team = GROUP_CODES.flatMap((g) => [`${g}1`, `${g}2`, `${g}3`]).slice(0, 32);
     s.semifinalist = ['A1', 'B1', 'C1', 'D1'];
     s.finalist = 'A1';
     s.champion = 'A1';
+    s.top_scorer = 1;
     expect(isComplete(s)).toBe(true);
+  });
+});
+
+describe('validateCoherence — top_scorer', () => {
+  it('null pasa coherence', () => {
+    const s = emptyEvent1State();
+    const res = validateCoherence(s, ctx);
+    expect(res.ok).toBe(true);
+  });
+
+  it('id positivo pasa coherence', () => {
+    const s = emptyEvent1State();
+    s.top_scorer = 42;
+    const res = validateCoherence(s, ctx);
+    expect(res.ok).toBe(true);
+  });
+});
+
+describe('isComplete — top_scorer', () => {
+  it('false si falta top_scorer aunque el resto esté completo', () => {
+    const s = emptyEvent1State();
+    for (const g of GROUP_CODES) s.group_winner[g] = `${g}1`;
+    s.playoff_team = GROUP_CODES.flatMap((g) => [`${g}1`, `${g}2`, `${g}3`]).slice(0, 32);
+    s.semifinalist = ['A1', 'B1', 'C1', 'D1'];
+    s.finalist = 'A1';
+    s.champion = 'A1';
+    // top_scorer queda null
+    expect(isComplete(s)).toBe(false);
   });
 });
