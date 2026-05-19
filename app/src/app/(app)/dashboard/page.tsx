@@ -121,7 +121,7 @@ export default async function DashboardPage() {
             <li>✅ <strong>Fase 3</strong> — Admin y carga manual de resultados</li>
             <li>✅ <strong>Fase 4</strong> — Sync con Football-Data.org</li>
             <li>✅ <strong>Fase 5</strong> — Eventos 2/3/4 (brackets)</li>
-            <li>⏳ <strong>Fase 6</strong> — Scoring y leaderboard en realtime</li>
+            <li>✅ <strong>Fase 6</strong> — Scoring y leaderboard en realtime</li>
             <li>⏳ <strong>Fase 7</strong> — Pulido</li>
           </ul>
         </CardContent>
