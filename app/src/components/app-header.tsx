@@ -25,7 +25,7 @@ export function AppHeader({ email, role }: { email: string; role: UserRole | nul
           <span className="text-xl">⚽</span>
           <span>Prode 2026</span>
         </Link>
-        <nav className="hidden gap-4 text-sm sm:flex">
+        <nav className="flex flex-wrap gap-2 text-xs sm:gap-4 sm:text-sm">
           <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
             Dashboard
           </Link>
