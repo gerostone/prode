@@ -92,7 +92,29 @@ export interface Match {
   outcome_pre_penalties: MatchOutcome | null;
   parent_slot_home: string | null;
   parent_slot_away: string | null;
+  external_id: string | null;
   locked: boolean;
+}
+
+export type StagingStatus = 'pending' | 'approved' | 'rejected';
+
+export interface MatchStaging {
+  id: number;
+  match_id: number;
+  source: string;
+  external_match_id: string | null;
+  home_score_90: number | null;
+  away_score_90: number | null;
+  home_score_120: number | null;
+  away_score_120: number | null;
+  went_to_penalties: boolean | null;
+  winner_team_code: string | null;
+  scheduled_at: string | null;
+  status: StagingStatus;
+  fetched_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  notes: string | null;
 }
 
 export interface Prediction {
