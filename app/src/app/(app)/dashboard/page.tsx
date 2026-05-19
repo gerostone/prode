@@ -3,7 +3,20 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { requireUser } from '@/lib/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Event } from '@/lib/database.types';
-import { Calendar, Trophy, Users, Shield } from 'lucide-react';
+import { Calendar, Trophy, Users, Shield, Clock } from 'lucide-react';
+
+function formatTimeRemaining(iso: string): string {
+  const diffMs = new Date(iso).getTime() - Date.now();
+  if (diffMs <= 0) return 'cierra ahora';
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const days = Math.floor(hours / 24);
+  if (days >= 1) {
+    const remHours = hours - days * 24;
+    return `cierra en ${days}d ${remHours}h`;
+  }
+  const mins = Math.floor((diffMs - hours * 1000 * 60 * 60) / (1000 * 60));
+  return `cierra en ${hours}h ${mins}m`;
+}
 
 export default async function DashboardPage() {
   const { user, profile } = await requireUser();
@@ -27,6 +40,15 @@ export default async function DashboardPage() {
   const { count: playersCount } = await supabase
     .from('profiles')
     .select('*', { count: 'exact', head: true });
+
+  const { data: nextClose } = await supabase
+    .from('events')
+    .select('id, name, closes_at')
+    .eq('status', 'open')
+    .not('closes_at', 'is', null)
+    .order('closes_at', { ascending: true })
+    .limit(1)
+    .maybeSingle<{ id: number; name: string; closes_at: string }>();
 
   const roleLabel = profile?.role === 'admin' ? 'Admin' : profile?.role === 'scorer' ? 'Scorer' : 'Jugador';
 
@@ -106,6 +128,19 @@ export default async function DashboardPage() {
             <p className="text-xs text-muted-foreground">Registrados en el Prode</p>
           </CardContent>
         </Card>
+
+        {nextClose && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Próximo cierre</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-bold">{nextClose.name}</div>
+              <p className="text-xs text-muted-foreground">{formatTimeRemaining(nextClose.closes_at)}</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Card>
