@@ -69,7 +69,7 @@ export function Event1Form({
       if (timers.current[kind]) clearTimeout(timers.current[kind]!);
       timers.current[kind] = setTimeout(async () => {
         setSaveStates((s) => ({ ...s, [kind]: 'saving' }));
-        const res = await saveSection({ kind, picks: sectionToPicks(nextState, kind) });
+        const res = await saveSection({ event_id: 1, kind, picks: sectionToPicks(nextState, kind) });
         if ('error' in res) {
           setSaveStates((s) => ({ ...s, [kind]: 'error' }));
           setErrorMsgs((m) => ({ ...m, [kind]: res.error }));

@@ -43,7 +43,7 @@ export default async function EventoPage({ params }: { params: { id: string } })
               Estado: {event.status}
             </p>
           </div>
-          {isAdmin && <AdminToggle status={event.status} />}
+          {isAdmin && <AdminToggle status={event.status} eventId={1} />}
         </CardHeader>
       </Card>
 
