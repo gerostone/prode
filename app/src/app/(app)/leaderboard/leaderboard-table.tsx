@@ -54,22 +54,13 @@ export function LeaderboardTable({
     return (
       <Card>
         <CardContent className="py-10 text-center text-sm text-muted-foreground">
-          Todavía no hay jugadores con puntos. Esperá a que se cierre algún evento.
+          Todavía no hay jugadores registrados.
         </CardContent>
       </Card>
     );
   }
 
   const allZero = rows.every((r) => r.total_points === 0);
-  if (allZero) {
-    return (
-      <Card>
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
-          Todavía no se corrió el scoring de ningún evento. Volvé después de que el admin recalcule.
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card>
@@ -78,6 +69,12 @@ export function LeaderboardTable({
           <Trophy className="h-5 w-5 text-yellow-600" />
           Leaderboard
         </CardTitle>
+        {allZero && (
+          <p className="text-xs text-muted-foreground">
+            Todos los puntajes están en 0 — el scoring aún no encontró aciertos. Los puntos aparecen
+            a medida que el admin carga los resultados reales y recalcula.
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-1">
         {rows.map((row, i) => {
