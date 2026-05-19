@@ -11,6 +11,7 @@
     "db:sync-teams": "tsx scripts/sync-teams.ts",
     "db:assign-groups": "tsx scripts/assign-groups.ts",
     "db:sync-matches": "tsx scripts/sync-matches.ts",
+    "db:list-fd-matches": "tsx scripts/list-fd-matches.ts",
     "db:generate-types": "supabase gen types typescript --local > src/lib/database.types.ts",
     "test": "vitest run",
     "test:watch": "vitest"
