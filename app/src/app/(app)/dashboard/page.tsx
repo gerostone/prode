@@ -101,7 +101,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">—</div>
-            <p className="text-xs text-muted-foreground">Se calcula en Fase 5</p>
+            <p className="text-xs text-muted-foreground">Ver en /leaderboard</p>
           </CardContent>
         </Card>
 
@@ -157,7 +157,7 @@ export default async function DashboardPage() {
             <li>✅ <strong>Fase 4</strong> — Sync con Football-Data.org</li>
             <li>✅ <strong>Fase 5</strong> — Eventos 2/3/4 (brackets)</li>
             <li>✅ <strong>Fase 6</strong> — Scoring y leaderboard en realtime</li>
-            <li>⏳ <strong>Fase 7</strong> — Pulido</li>
+            <li>✅ <strong>Fase 7</strong> — Pulido</li>
           </ul>
         </CardContent>
       </Card>
