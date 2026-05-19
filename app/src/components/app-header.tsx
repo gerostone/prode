@@ -35,6 +35,9 @@ export function AppHeader({ email, role }: { email: string; role: UserRole | nul
           <Link href={"/leaderboard" as Route} className="text-muted-foreground hover:text-foreground">
             Leaderboard
           </Link>
+          <Link href={"/reglamento" as Route} className="text-muted-foreground hover:text-foreground">
+            Reglamento
+          </Link>
           {role === 'admin' && (
             <Link href={"/admin" as Route} className="text-muted-foreground hover:text-foreground">
               Admin
