@@ -32,12 +32,14 @@ export function AppHeader({ email, role }: { email: string; role: UserRole | nul
           <Link href="/eventos/1" className="text-muted-foreground hover:text-foreground">
             Evento 1
           </Link>
+          <Link href={"/leaderboard" as Route} className="text-muted-foreground hover:text-foreground">
+            Leaderboard
+          </Link>
           {role === 'admin' && (
             <Link href={"/admin" as Route} className="text-muted-foreground hover:text-foreground">
               Admin
             </Link>
           )}
-          {/* Próximas fases: <Link href="/leaderboard">Leaderboard</Link> */}
         </nav>
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-muted-foreground sm:inline">{email}</span>
