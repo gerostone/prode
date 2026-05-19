@@ -2,15 +2,16 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Users, BarChart3 } from 'lucide-react';
+import { Shield, Users, BarChart3, RefreshCcw } from 'lucide-react';
 
 export default async function AdminIndexPage() {
   const supabase = createSupabaseServerClient();
 
-  const [teamsRes, playersRes, eventsRes] = await Promise.all([
+  const [teamsRes, playersRes, eventsRes, stagingRes] = await Promise.all([
     supabase.from('teams').select('code, group_position, eliminated_at_stage'),
     supabase.from('players').select('id, is_top_scorer'),
     supabase.from('events').select('id, status').order('id'),
+    supabase.from('matches_staging').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
   ]);
 
   const teams = teamsRes.data ?? [];
@@ -21,6 +22,7 @@ export default async function AdminIndexPage() {
   const teamsWithStage = teams.filter((t) => t.eliminated_at_stage !== null).length;
   const topScorerSet = players.filter((p) => p.is_top_scorer).length;
   const event1Status = events.find((e) => e.id === 1)?.status ?? '—';
+  const pendingStaging = stagingRes.count ?? 0;
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -60,6 +62,20 @@ export default async function AdminIndexPage() {
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </div>
             <CardDescription>Evento 1: {event1Status}</CardDescription>
+          </CardHeader>
+        </Card>
+      </Link>
+
+      <Link href={"/admin/sync" as Route} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
+        <Card className="h-full transition-colors hover:bg-accent/40">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Sync FD</CardTitle>
+              <RefreshCcw className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <CardDescription>
+              {pendingStaging > 0 ? `${pendingStaging} pendientes` : 'Sin pendientes'}
+            </CardDescription>
           </CardHeader>
         </Card>
       </Link>
