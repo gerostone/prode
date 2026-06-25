@@ -14,3 +14,9 @@
 app/node_modules/
 app/.next/
 app/.env.local
+
+# Local-only scripts con datos puntuales (sorteo, etc.)
+app/scripts/*-real.ts
+
+# Supabase CLI temp
+app/supabase/.temp/
