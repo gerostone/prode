@@ -16,6 +16,27 @@ const STAGE_LABELS: Record<string, string> = {
   final: 'Final',
 };
 
+// Referencia FIFA 2026 por slot R32 (M73–M88). Sirve para identificar qué
+// partido del cuadro oficial corresponde a cada slot al cargar los equipos.
+const R32_FIFA_REF: Record<string, { fifa: string; fecha: string; cruce: string }> = {
+  'R32-01': { fifa: 'M73', fecha: '28/06 16:00', cruce: 'Sudáfrica vs Canadá' },
+  'R32-02': { fifa: 'M74', fecha: '29/06 17:30', cruce: 'Alemania vs 3A/B/C/D/F' },
+  'R32-03': { fifa: 'M75', fecha: '29/06 22:00', cruce: '1F vs Marruecos' },
+  'R32-04': { fifa: 'M76', fecha: '29/06 14:00', cruce: 'Brasil vs 2F' },
+  'R32-05': { fifa: 'M77', fecha: '30/06 18:00', cruce: '1I vs 3C/D/F/G/H' },
+  'R32-06': { fifa: 'M78', fecha: '30/06 14:00', cruce: '2E vs 2I' },
+  'R32-07': { fifa: 'M79', fecha: '30/06 22:00', cruce: 'México vs 3C/E/F/H/I' },
+  'R32-08': { fifa: 'M80', fecha: '01/07 13:00', cruce: '1L vs 3E/H/I/J/K' },
+  'R32-09': { fifa: 'M81', fecha: '01/07 21:00', cruce: 'Estados Unidos vs 3B/E/F/I/J' },
+  'R32-10': { fifa: 'M82', fecha: '01/07 17:00', cruce: '1G vs 3A/E/H/I/J' },
+  'R32-11': { fifa: 'M83', fecha: '02/07 20:00', cruce: '2K vs 2L' },
+  'R32-12': { fifa: 'M84', fecha: '02/07 16:00', cruce: '1H vs 2J' },
+  'R32-13': { fifa: 'M85', fecha: '03/07 00:00', cruce: 'Suiza vs 3E/F/G/I/J' },
+  'R32-14': { fifa: 'M86', fecha: '03/07 19:00', cruce: 'Argentina vs 2H' },
+  'R32-15': { fifa: 'M87', fecha: '03/07 22:30', cruce: '1K vs 3D/E/I/J/L' },
+  'R32-16': { fifa: 'M88', fecha: '03/07 15:00', cruce: '2D vs 2G' },
+};
+
 export function MatchesEditor({
   matches: initial,
   teams,
@@ -73,18 +94,20 @@ export function MatchesEditor({
 
   return (
     <div className="space-y-4">
-      <Card className="border-amber-300 bg-amber-50">
+      <Card className="border-emerald-300 bg-emerald-50">
         <CardHeader>
-          <CardTitle className="text-amber-900">⚠ Verificación del bracket</CardTitle>
+          <CardTitle className="text-emerald-900">✓ Bracket alineado con FIFA 2026</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-amber-900">
+        <CardContent className="space-y-2 text-sm text-emerald-900">
           <p>
-            Esta app asume <strong>pairing consecutivo</strong>: R32-01 + R32-02 → R16-01,
-            R32-03 + R32-04 → R16-02, etc. Si el bracket FIFA oficial difiere, los puntos
-            de winner van al match equivocado.
+            La estructura del cuadro (octavos → final) ya está configurada según el bracket
+            oficial de FIFA. Cada slot <strong>R32</strong> muestra al lado su partido FIFA
+            (M73–M88), fecha y cruce: cargá el equipo que ocupa esa posición según tus
+            resultados de grupo del Prode.
           </p>
           <p>
-            Antes del primer R16,{' '}
+            Los octavos en adelante se completan solos al aprobar los resultados de cada ronda.
+            Para revisar el árbol completo,{' '}
             <a
               href="https://www.fifa.com/fifaplus/en/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures"
               target="_blank"
@@ -93,11 +116,7 @@ export function MatchesEditor({
             >
               comparar contra FIFA
             </a>{' '}
-            o correr <code>npm run db:verify-bracket</code> para ver el árbol completo.
-          </p>
-          <p>
-            Para corregir un slot:{' '}
-            <code>update matches set parent_slot_home=&apos;R32-XX&apos;, parent_slot_away=&apos;R32-YY&apos; where bracket_slot=&apos;R16-NN&apos;;</code>
+            o correr <code>npm run db:verify-bracket</code>.
           </p>
         </CardContent>
       </Card>
@@ -122,6 +141,12 @@ export function MatchesEditor({
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium">
                       {m.bracket_slot}
+                      {R32_FIFA_REF[m.bracket_slot] && (
+                        <span className="ml-2 text-xs font-normal text-emerald-700">
+                          {R32_FIFA_REF[m.bracket_slot].fifa} · {R32_FIFA_REF[m.bracket_slot].fecha} ·{' '}
+                          {R32_FIFA_REF[m.bracket_slot].cruce}
+                        </span>
+                      )}
                       {(m.parent_slot_home || m.parent_slot_away) && (
                         <span className="ml-2 text-xs font-normal text-muted-foreground">
                           ← winner({m.parent_slot_home ?? '—'}) + winner({m.parent_slot_away ?? '—'})
