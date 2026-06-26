@@ -2,9 +2,12 @@ import { NextResponse } from 'next/server';
 
 // ISR: el route (y su fetch a FD) se revalida cada 60s. Con el auto-refresh del
 // widget siempre hay tráfico, así que FD recibe ~1 request por minuto sin importar
-// cuántos usuarios entren — protege el rate limit (10/min). El filtro de "hoy" se
-// recalcula en cada revalidación (precisión de ±60s, irrelevante para el caso).
+// cuántos usuarios entren ni cuántos días naveguen — protege el rate limit (10/min).
+// Devolvemos TODO el fixture: el filtro por día se hace en el cliente, así moverse
+// entre fechas no genera más requests.
 export const revalidate = 60;
+
+const AR_TZ = 'America/Argentina/Buenos_Aires';
 
 type FDMatch = {
   id: number;
@@ -17,9 +20,10 @@ type FDMatch = {
   score: { fullTime: { home: number | null; away: number | null } };
 };
 
-export type TodayMatch = {
+export type DayMatch = {
   id: number;
   utcDate: string;
+  dayKey: string; // día calendario AR (YYYY-MM-DD)
   state: 'live' | 'finished' | 'scheduled';
   stage: string;
   group: string | null;
@@ -41,7 +45,7 @@ const STAGE_LABEL: Record<string, string> = {
   FINAL: 'Final',
 };
 
-function stateOf(status: string): TodayMatch['state'] {
+function stateOf(status: string): DayMatch['state'] {
   if (status === 'IN_PLAY' || status === 'PAUSED') return 'live';
   if (status === 'FINISHED') return 'finished';
   return 'scheduled';
@@ -63,43 +67,23 @@ export async function GET() {
     return NextResponse.json({ matches: [] });
   }
 
-  // "Hoy" en hora Argentina (UTC-3): rango [hoy 00:00 AR, mañana 00:00 AR) en UTC.
-  const now = Date.now();
-  const arShift = 3 * 60 * 60 * 1000;
-  const arNow = new Date(now - arShift);
-  const startUtc = Date.UTC(arNow.getUTCFullYear(), arNow.getUTCMonth(), arNow.getUTCDate(), 3, 0, 0);
-  const endUtc = startUtc + 24 * 60 * 60 * 1000;
-  // Caso borde: partidos que arrancan ~23:00 AR cruzan la medianoche. Mantenemos
-  // visibles los que empezaron en las últimas 5h (≈ terminaron hace <3h) aunque su
-  // fecha de inicio ya sea "de ayer".
-  const recentSince = now - 5 * 60 * 60 * 1000;
-
-  const matches: TodayMatch[] = (data.matches ?? [])
-    .filter((m) => {
-      const t = Date.parse(m.utcDate);
-      const isToday = t >= startUtc && t < endUtc;
-      const isLive = m.status === 'IN_PLAY' || m.status === 'PAUSED';
-      const isRecent = t >= recentSince && t <= now;
-      return isToday || isLive || isRecent;
-    })
+  const matches: DayMatch[] = (data.matches ?? [])
     .map((m) => ({
       id: m.id,
       utcDate: m.utcDate,
+      // en-CA formatea como YYYY-MM-DD; con timeZone AR queda el día calendario argentino.
+      dayKey: new Date(m.utcDate).toLocaleDateString('en-CA', { timeZone: AR_TZ }),
       state: stateOf(m.status),
       stage: STAGE_LABEL[m.stage] ?? m.stage,
       group: m.group ? m.group.replace('GROUP_', 'Grupo ') : null,
-      home: m.homeTeam.name ?? '?',
-      away: m.awayTeam.name ?? '?',
+      home: m.homeTeam.name ?? 'Por definir',
+      away: m.awayTeam.name ?? 'Por definir',
       homeCrest: m.homeTeam.crest,
       awayCrest: m.awayTeam.crest,
       homeScore: m.score?.fullTime?.home ?? null,
       awayScore: m.score?.fullTime?.away ?? null,
     }))
-    .sort((a, b) => {
-      const rank = (s: TodayMatch['state']) => (s === 'live' ? 0 : s === 'scheduled' ? 1 : 2);
-      if (rank(a.state) !== rank(b.state)) return rank(a.state) - rank(b.state);
-      return a.utcDate.localeCompare(b.utcDate);
-    });
+    .sort((a, b) => a.utcDate.localeCompare(b.utcDate));
 
   return NextResponse.json({ matches });
 }
