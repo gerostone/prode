@@ -16,9 +16,11 @@ const STAGE_LABELS: Record<string, string> = {
   final: 'Final',
 };
 
-// Referencia FIFA 2026 por slot R32 (M73–M88). Sirve para identificar qué
-// partido del cuadro oficial corresponde a cada slot al cargar los equipos.
-const R32_FIFA_REF: Record<string, { fifa: string; fecha: string; cruce: string }> = {
+// Referencia FIFA 2026 por slot (M73–M104). En R32 incluye el cruce de posiciones
+// porque esos slots se cargan a mano; de octavos en adelante solo el partido y la
+// fecha, ya que se completan solos vía fn_propagate_winner.
+const FIFA_REF: Record<string, { fifa: string; fecha: string; cruce?: string }> = {
+  // Round of 32 — se cargan a mano
   'R32-01': { fifa: 'M73', fecha: '28/06 16:00', cruce: 'Sudáfrica vs Canadá' },
   'R32-02': { fifa: 'M74', fecha: '29/06 17:30', cruce: 'Alemania vs 3A/B/C/D/F' },
   'R32-03': { fifa: 'M75', fecha: '29/06 22:00', cruce: '1F vs Marruecos' },
@@ -35,6 +37,22 @@ const R32_FIFA_REF: Record<string, { fifa: string; fecha: string; cruce: string 
   'R32-14': { fifa: 'M86', fecha: '03/07 19:00', cruce: 'Argentina vs 2H' },
   'R32-15': { fifa: 'M87', fecha: '03/07 22:30', cruce: '1K vs 3D/E/I/J/L' },
   'R32-16': { fifa: 'M88', fecha: '03/07 15:00', cruce: '2D vs 2G' },
+  // Octavos en adelante — se completan solos
+  'R16-01': { fifa: 'M89', fecha: '04/07 18:00' },
+  'R16-02': { fifa: 'M90', fecha: '04/07 14:00' },
+  'R16-03': { fifa: 'M91', fecha: '05/07 17:00' },
+  'R16-04': { fifa: 'M92', fecha: '05/07 21:00' },
+  'R16-05': { fifa: 'M93', fecha: '06/07 16:00' },
+  'R16-06': { fifa: 'M94', fecha: '06/07 21:00' },
+  'R16-07': { fifa: 'M95', fecha: '07/07 13:00' },
+  'R16-08': { fifa: 'M96', fecha: '07/07 17:00' },
+  'QF-01': { fifa: 'M97', fecha: '09/07 17:00' },
+  'QF-02': { fifa: 'M98', fecha: '10/07 16:00' },
+  'QF-03': { fifa: 'M99', fecha: '11/07 18:00' },
+  'QF-04': { fifa: 'M100', fecha: '11/07 22:00' },
+  'SF-01': { fifa: 'M101', fecha: '14/07 16:00' },
+  'SF-02': { fifa: 'M102', fecha: '15/07 16:00' },
+  FINAL: { fifa: 'M104', fecha: '19/07 16:00' },
 };
 
 export function MatchesEditor({
@@ -141,10 +159,10 @@ export function MatchesEditor({
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium">
                       {m.bracket_slot}
-                      {R32_FIFA_REF[m.bracket_slot] && (
+                      {FIFA_REF[m.bracket_slot] && (
                         <span className="ml-2 text-xs font-normal text-emerald-700">
-                          {R32_FIFA_REF[m.bracket_slot].fifa} · {R32_FIFA_REF[m.bracket_slot].fecha} ·{' '}
-                          {R32_FIFA_REF[m.bracket_slot].cruce}
+                          {FIFA_REF[m.bracket_slot].fifa} · {FIFA_REF[m.bracket_slot].fecha}
+                          {FIFA_REF[m.bracket_slot].cruce ? ` · ${FIFA_REF[m.bracket_slot].cruce}` : ''}
                         </span>
                       )}
                       {(m.parent_slot_home || m.parent_slot_away) && (
