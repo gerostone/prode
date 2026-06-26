@@ -90,28 +90,32 @@ export function LeaderboardTable({
                 onClick={() => toggleExpand(row.user_id)}
                 className="flex w-full items-center gap-3 p-3 text-left hover:bg-accent/40"
               >
-                <span className="w-8 text-center font-semibold text-muted-foreground">
+                <span className="w-6 shrink-0 text-center font-semibold text-muted-foreground">
                   {i + 1}
                 </span>
                 <Avatar name={row.display_name} url={row.avatar_url} />
-                <span className={`flex-1 ${isCurrent ? 'font-semibold' : ''}`}>
-                  {row.display_name}
-                  {isCurrent && (
-                    <span className="ml-2 text-xs text-primary">(vos)</span>
-                  )}
-                </span>
-                <span className="font-bold tabular-nums">{row.total_points} pts</span>
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {row.total_correct} aciertos
-                </span>
+                <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                  <span className={`truncate ${isCurrent ? 'font-semibold' : ''}`}>
+                    {row.display_name}
+                  </span>
+                  {isCurrent && <span className="shrink-0 text-xs text-primary">(vos)</span>}
+                </div>
+                <div className="flex shrink-0 flex-col items-end leading-tight">
+                  <span className="whitespace-nowrap font-bold tabular-nums">
+                    {row.total_points} pts
+                  </span>
+                  <span className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">
+                    {row.total_correct} aciertos
+                  </span>
+                </div>
                 {isExpanded ? (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
                 ) : (
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                 )}
               </button>
               {isExpanded && (
-                <div className="grid grid-cols-4 gap-2 border-t bg-muted/20 p-3 text-sm">
+                <div className="grid grid-cols-2 gap-2 border-t bg-muted/20 p-3 text-sm sm:grid-cols-4">
                   {[1, 2, 3, 4].map((eventId) => (
                     <div key={eventId} className="text-center">
                       <div className="text-xs text-muted-foreground">Evento {eventId}</div>
@@ -133,10 +137,10 @@ export function LeaderboardTable({
 function Avatar({ name, url }: { name: string; url: string | null }) {
   if (url) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={url} alt={name} className="h-8 w-8 rounded-full" />;
+    return <img src={url} alt={name} className="h-8 w-8 shrink-0 rounded-full" />;
   }
   return (
-    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium uppercase">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium uppercase">
       {name.charAt(0)}
     </div>
   );
