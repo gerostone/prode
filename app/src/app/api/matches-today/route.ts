@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 
-// El route corre en cada request (recalcula "hoy" en hora AR), pero el fetch a
-// FD se cachea 60s (ver `next: { revalidate: 60 }` abajo). Así FD recibe como
-// máximo 1 request por minuto sin importar cuántos usuarios entren — protege el
-// rate limit (10/min) — y el filtro de fecha nunca queda congelado.
-export const dynamic = 'force-dynamic';
+// ISR: el route (y su fetch a FD) se revalida cada 60s. Con el auto-refresh del
+// widget siempre hay tráfico, así que FD recibe ~1 request por minuto sin importar
+// cuántos usuarios entren — protege el rate limit (10/min). El filtro de "hoy" se
+// recalcula en cada revalidación (precisión de ±60s, irrelevante para el caso).
+export const revalidate = 60;
 
 type FDMatch = {
   id: number;
@@ -69,13 +69,18 @@ export async function GET() {
   const arNow = new Date(now - arShift);
   const startUtc = Date.UTC(arNow.getUTCFullYear(), arNow.getUTCMonth(), arNow.getUTCDate(), 3, 0, 0);
   const endUtc = startUtc + 24 * 60 * 60 * 1000;
+  // Caso borde: partidos que arrancan ~23:00 AR cruzan la medianoche. Mantenemos
+  // visibles los que empezaron en las últimas 5h (≈ terminaron hace <3h) aunque su
+  // fecha de inicio ya sea "de ayer".
+  const recentSince = now - 5 * 60 * 60 * 1000;
 
   const matches: TodayMatch[] = (data.matches ?? [])
     .filter((m) => {
       const t = Date.parse(m.utcDate);
       const isToday = t >= startUtc && t < endUtc;
       const isLive = m.status === 'IN_PLAY' || m.status === 'PAUSED';
-      return isToday || isLive;
+      const isRecent = t >= recentSince && t <= now;
+      return isToday || isLive || isRecent;
     })
     .map((m) => ({
       id: m.id,
