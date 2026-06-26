@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { requireUser } from '@/lib/auth';
+import { MatchesTodayWidget } from '@/components/matches-today-widget';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Event } from '@/lib/database.types';
 import { Calendar, Trophy, Users, Shield, Clock } from 'lucide-react';
@@ -158,6 +159,8 @@ export default async function DashboardPage() {
           </Card>
         )}
       </div>
+
+      <MatchesTodayWidget />
 
       <Card>
         <CardHeader>
