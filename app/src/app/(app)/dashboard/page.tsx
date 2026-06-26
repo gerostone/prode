@@ -50,6 +50,16 @@ export default async function DashboardPage() {
     .limit(1)
     .maybeSingle<{ id: number; name: string; closes_at: string }>();
 
+  // Puntaje propio: acumulado de todos los eventos scoreados hasta ahora (parcial)
+  const { data: myScores } = await supabase
+    .from('scores')
+    .select('points, correct_count')
+    .eq('user_id', user.id);
+  const scored = (myScores ?? []) as { points: number; correct_count: number }[];
+  const myPoints = scored.reduce((acc, s) => acc + (s.points ?? 0), 0);
+  const myCorrect = scored.reduce((acc, s) => acc + (s.correct_count ?? 0), 0);
+  const hasScores = scored.length > 0;
+
   const roleLabel = profile?.role === 'admin' ? 'Admin' : profile?.role === 'scorer' ? 'Scorer' : 'Jugador';
 
   return (
@@ -94,16 +104,22 @@ export default async function DashboardPage() {
           </Card>
         )}
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tu puntaje</CardTitle>
-            <Trophy className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">—</div>
-            <p className="text-xs text-muted-foreground">Ver en /leaderboard</p>
-          </CardContent>
-        </Card>
+        <Link href="/leaderboard" className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <Card className="h-full transition-colors hover:bg-accent/40">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Tu puntaje</CardTitle>
+              <Trophy className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{myPoints} pts</div>
+              <p className="text-xs text-muted-foreground">
+                {hasScores
+                  ? `${myCorrect} aciertos · parcial — ver leaderboard →`
+                  : 'Sin puntos todavía — ver leaderboard →'}
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
