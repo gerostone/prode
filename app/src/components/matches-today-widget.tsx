@@ -219,61 +219,92 @@ function MatchRow({ m }: { m: DayMatch }) {
   const time = new Date(m.utcDate).toLocaleTimeString('es-AR', {
     hour: '2-digit',
     minute: '2-digit',
+    hour12: false,
     timeZone: AR_TZ,
   });
-  const hasScore = m.homeScore !== null && m.awayScore !== null;
   const live = m.state === 'live';
+  const finished = m.state === 'finished';
+  const hasScore = m.homeScore !== null && m.awayScore !== null;
+  // En partidos terminados, atenuamos al perdedor para que el ganador resalte.
+  const homeLost = finished && hasScore && (m.homeScore as number) < (m.awayScore as number);
+  const awayLost = finished && hasScore && (m.awayScore as number) < (m.homeScore as number);
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-md border px-3 py-2.5 ${
+      className={`flex items-stretch gap-3 rounded-md border px-3 py-2 ${
         live ? 'border-red-200 bg-red-50/60' : 'border-border'
       }`}
     >
-      <div className="w-16 shrink-0 text-xs font-semibold">
+      <div className="flex w-16 shrink-0 flex-col justify-center text-[11px] font-semibold leading-tight">
         {live ? (
           <span className="flex items-center gap-1 text-red-600">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-600" />
             EN VIVO
           </span>
-        ) : m.state === 'finished' ? (
+        ) : finished ? (
           <span className="text-muted-foreground">FIN</span>
         ) : (
-          <span className="text-muted-foreground">{time}</span>
+          <span className="text-sm text-muted-foreground">{time}</span>
         )}
       </div>
 
-      <div className="flex flex-1 items-center justify-center gap-3">
-        <div className="flex flex-1 items-center justify-end gap-2 text-right">
-          <span className="truncate font-medium">{m.home}</span>
-          {m.homeCrest && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={m.homeCrest} alt="" className="h-5 w-5 shrink-0" />
-          )}
-        </div>
-
-        <div className="shrink-0 text-center tabular-nums">
-          {hasScore ? (
-            <span className={`text-lg font-bold ${live ? 'text-red-700' : ''}`}>
-              {m.homeScore} <span className="text-muted-foreground">-</span> {m.awayScore}
-            </span>
-          ) : (
-            <span className="text-sm text-muted-foreground">vs</span>
-          )}
-        </div>
-
-        <div className="flex flex-1 items-center justify-start gap-2 text-left">
-          {m.awayCrest && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={m.awayCrest} alt="" className="h-5 w-5 shrink-0" />
-          )}
-          <span className="truncate font-medium">{m.away}</span>
-        </div>
+      <div className="min-w-0 flex-1 space-y-1">
+        <TeamLine
+          name={m.home}
+          crest={m.homeCrest}
+          score={m.homeScore}
+          live={live}
+          dim={homeLost}
+        />
+        <TeamLine
+          name={m.away}
+          crest={m.awayCrest}
+          score={m.awayScore}
+          live={live}
+          dim={awayLost}
+        />
       </div>
 
-      <div className="hidden w-20 shrink-0 truncate text-right text-xs text-muted-foreground sm:block">
+      <div className="hidden w-20 shrink-0 items-center justify-end truncate text-right text-xs text-muted-foreground sm:flex">
         {m.group ?? m.stage}
       </div>
+    </div>
+  );
+}
+
+function TeamLine({
+  name,
+  crest,
+  score,
+  live,
+  dim,
+}: {
+  name: string;
+  crest: string | null;
+  score: number | null;
+  live: boolean;
+  dim: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      {crest ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={crest} alt="" className="h-4 w-4 shrink-0" />
+      ) : (
+        <span className="h-4 w-4 shrink-0" />
+      )}
+      <span className={`min-w-0 flex-1 truncate text-sm font-medium ${dim ? 'text-muted-foreground' : ''}`}>
+        {name}
+      </span>
+      {score !== null && (
+        <span
+          className={`shrink-0 text-sm font-bold tabular-nums ${
+            live ? 'text-red-700' : dim ? 'text-muted-foreground' : ''
+          }`}
+        >
+          {score}
+        </span>
+      )}
     </div>
   );
 }
