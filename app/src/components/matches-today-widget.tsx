@@ -231,44 +231,79 @@ function MatchRow({ m }: { m: DayMatch }) {
 
   return (
     <div
-      className={`flex items-stretch gap-3 rounded-md border px-3 py-2 ${
+      className={`rounded-md border px-3 py-2 ${
         live ? 'border-red-200 bg-red-50/60' : 'border-border'
       }`}
     >
-      <div className="flex w-16 shrink-0 flex-col justify-center text-[11px] font-semibold leading-tight">
-        {live ? (
-          <span className="flex items-center gap-1 text-red-600">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-600" />
-            EN VIVO
-          </span>
-        ) : finished ? (
-          <span className="text-muted-foreground">FIN</span>
-        ) : (
-          <span className="text-sm text-muted-foreground">{time}</span>
-        )}
+      {/* Mobile: equipos apilados, cada nombre usa todo el ancho */}
+      <div className="flex items-stretch gap-3 sm:hidden">
+        <div className="flex w-14 shrink-0 flex-col justify-center">
+          <StatusBadge state={m.state} time={time} />
+        </div>
+        <div className="min-w-0 flex-1 space-y-1">
+          <TeamLine name={m.home} crest={m.homeCrest} score={m.homeScore} live={live} dim={homeLost} />
+          <TeamLine name={m.away} crest={m.awayCrest} score={m.awayScore} live={live} dim={awayLost} />
+        </div>
       </div>
 
-      <div className="min-w-0 flex-1 space-y-1">
-        <TeamLine
-          name={m.home}
-          crest={m.homeCrest}
-          score={m.homeScore}
-          live={live}
-          dim={homeLost}
-        />
-        <TeamLine
-          name={m.away}
-          crest={m.awayCrest}
-          score={m.awayScore}
-          live={live}
-          dim={awayLost}
-        />
-      </div>
-
-      <div className="hidden w-20 shrink-0 items-center justify-end truncate text-right text-xs text-muted-foreground sm:flex">
-        {m.group ?? m.stage}
+      {/* Desktop: una sola línea con el marcador centrado */}
+      <div className="hidden items-center gap-3 sm:flex">
+        <div className="w-16 shrink-0">
+          <StatusBadge state={m.state} time={time} />
+        </div>
+        <div className="flex flex-1 items-center justify-center gap-3">
+          <div className="flex flex-1 items-center justify-end gap-2 text-right">
+            <span className={`truncate font-medium ${homeLost ? 'text-muted-foreground' : ''}`}>
+              {m.home}
+            </span>
+            {m.homeCrest && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={m.homeCrest} alt="" className="h-5 w-5 shrink-0" />
+            )}
+          </div>
+          <div className="shrink-0 text-center tabular-nums">
+            {hasScore ? (
+              <span className={`text-lg font-bold ${live ? 'text-red-700' : ''}`}>
+                {m.homeScore} <span className="text-muted-foreground">-</span> {m.awayScore}
+              </span>
+            ) : (
+              <span className="text-sm text-muted-foreground">vs</span>
+            )}
+          </div>
+          <div className="flex flex-1 items-center justify-start gap-2 text-left">
+            {m.awayCrest && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={m.awayCrest} alt="" className="h-5 w-5 shrink-0" />
+            )}
+            <span className={`truncate font-medium ${awayLost ? 'text-muted-foreground' : ''}`}>
+              {m.away}
+            </span>
+          </div>
+        </div>
+        <div className="w-20 shrink-0 truncate text-right text-xs text-muted-foreground">
+          {m.group ?? m.stage}
+        </div>
       </div>
     </div>
+  );
+}
+
+function StatusBadge({ state, time }: { state: MatchState; time: string }) {
+  if (state === 'live') {
+    return (
+      <span className="flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold text-red-600">
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-600" />
+        EN VIVO
+      </span>
+    );
+  }
+  if (state === 'finished') {
+    return <span className="text-[11px] font-semibold text-muted-foreground">FIN</span>;
+  }
+  return (
+    <span className="whitespace-nowrap text-sm font-semibold tabular-nums text-muted-foreground">
+      {time}
+    </span>
   );
 }
 
