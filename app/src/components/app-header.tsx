@@ -23,6 +23,7 @@ export function AppHeader({ email, role }: { email: string; role: UserRole | nul
   const links: { href: string; label: string }[] = [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/eventos/1', label: 'Evento 1' },
+    { href: '/eventos/2', label: 'Evento 2' },
     { href: '/leaderboard', label: 'Leaderboard' },
     { href: '/reglamento', label: 'Reglamento' },
     ...(role === 'admin' ? [{ href: '/admin', label: 'Admin' }] : []),
