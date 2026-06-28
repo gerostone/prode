@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Users, BarChart3, RefreshCcw, Swords, UserCog } from 'lucide-react';
+import { Shield, Users, BarChart3, RefreshCcw, Swords, UserCog, ClipboardCheck } from 'lucide-react';
 
 export default async function AdminIndexPage() {
   const supabase = createSupabaseServerClient();
@@ -12,7 +12,7 @@ export default async function AdminIndexPage() {
     supabase.from('players').select('id, is_top_scorer'),
     supabase.from('events').select('id, status').order('id'),
     supabase.from('matches_staging').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-    supabase.from('matches').select('id, home_team_code, away_team_code'),
+    supabase.from('matches').select('id, home_team_code, away_team_code, winner_team_code, stage'),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
   ]);
 
@@ -26,9 +26,18 @@ export default async function AdminIndexPage() {
   const event1Status = events.find((e) => e.id === 1)?.status ?? '—';
   const pendingStaging = stagingRes.count ?? 0;
 
-  const allMatches = (matchesRes.data ?? []) as { home_team_code: string | null; away_team_code: string | null }[];
+  const allMatches = (matchesRes.data ?? []) as {
+    home_team_code: string | null;
+    away_team_code: string | null;
+    winner_team_code: string | null;
+    stage: string;
+  }[];
   const matchesFilled = allMatches.filter((m) => m.home_team_code !== null && m.away_team_code !== null).length;
   const matchesTotal = allMatches.length;
+
+  const KNOCKOUT = ['r32', 'r16', 'qf', 'sf', 'final'];
+  const koMatches = allMatches.filter((m) => KNOCKOUT.includes(m.stage));
+  const koWithResult = koMatches.filter((m) => m.winner_team_code !== null).length;
 
   const usersCount = profilesRes.count ?? 0;
 
@@ -97,6 +106,20 @@ export default async function AdminIndexPage() {
             </div>
             <CardDescription>
               {matchesFilled}/{matchesTotal} con home+away
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </Link>
+
+      <Link href={"/admin/results" as Route} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
+        <Card className="h-full transition-colors hover:bg-accent/40">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Resultados</CardTitle>
+              <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <CardDescription>
+              {koWithResult}/{koMatches.length} partidos de bracket cargados
             </CardDescription>
           </CardHeader>
         </Card>
