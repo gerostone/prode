@@ -31,8 +31,9 @@ export function SyncNowButton() {
       {error && <p className="text-sm text-destructive">{error}</p>}
       {result && (
         <p className="text-sm text-muted-foreground">
-          {result.inserted} nuevos en staging, {result.skipped} sin cambios, {result.unmapped} sin
-          external_id.{result.errors.length > 0 && ` ${result.errors.length} errores.`}
+          {result.inserted} nuevos en staging, {result.updated} actualizados, {result.skipped} sin
+          cambios, {result.unmapped} sin external_id.
+          {result.errors.length > 0 && ` ${result.errors.length} errores.`}
         </p>
       )}
     </div>

@@ -39,6 +39,7 @@ interface FDMatchesResponse { matches: FDMatch[] }
 
 export interface SyncResult {
   inserted: number;
+  updated: number;
   skipped: number;
   unmapped: number;
   errors: Array<{ external_id: string; message: string }>;
@@ -54,7 +55,7 @@ export async function syncFromFD(options: {
     auth: { persistSession: false },
   });
 
-  const result: SyncResult = { inserted: 0, skipped: 0, unmapped: 0, errors: [] };
+  const result: SyncResult = { inserted: 0, updated: 0, skipped: 0, unmapped: 0, errors: [] };
 
   const res = await fetch('https://api.football-data.org/v4/competitions/WC/matches', {
     headers: { 'X-Auth-Token': fdApiKey },
@@ -72,6 +73,16 @@ export async function syncFromFD(options: {
   if (lmErr) throw lmErr;
   const byExternalId = new Map<string, any>(
     (localMatches ?? []).map((m) => [m.external_id as string, m]),
+  );
+
+  // Filas ya pendientes en staging, indexadas por match: mantenemos como máximo una
+  // pendiente por partido para no acumular duplicados en cada corrida.
+  const { data: pendingRows } = await supabase
+    .from('matches_staging')
+    .select('*')
+    .eq('status', 'pending');
+  const pendingByMatch = new Map<number, any>(
+    (pendingRows ?? []).map((s) => [s.match_id as number, s]),
   );
 
   for (const fd of elimFD) {
@@ -105,7 +116,7 @@ export async function syncFromFD(options: {
       continue;
     }
 
-    const { error: insErr } = await supabase.from('matches_staging').insert({
+    const proposed = {
       match_id: local.id,
       source: 'football-data.org',
       external_match_id: String(fd.id),
@@ -116,8 +127,45 @@ export async function syncFromFD(options: {
       went_to_penalties: wentToPenalties,
       winner_team_code: winner,
       scheduled_at: proposedScheduledAt,
-      status: 'pending',
-    });
+      status: 'pending' as const,
+    };
+
+    const existing = pendingByMatch.get(local.id);
+    if (existing) {
+      const samePending =
+        existing.home_score_90 === home90 &&
+        existing.away_score_90 === away90 &&
+        existing.home_score_120 === home120 &&
+        existing.away_score_120 === away120 &&
+        existing.went_to_penalties === wentToPenalties &&
+        existing.winner_team_code === winner &&
+        existing.scheduled_at === proposedScheduledAt;
+      if (samePending) {
+        // Ya hay una fila pendiente idéntica esperando aprobación: no duplicamos.
+        result.skipped++;
+        continue;
+      }
+      // FD cambió desde la última corrida: actualizamos la fila pendiente en vez de crear otra.
+      const { error: upErr } = await supabase
+        .from('matches_staging')
+        .update({
+          external_match_id: proposed.external_match_id,
+          home_score_90: home90,
+          away_score_90: away90,
+          home_score_120: home120,
+          away_score_120: away120,
+          went_to_penalties: wentToPenalties,
+          winner_team_code: winner,
+          scheduled_at: proposedScheduledAt,
+          fetched_at: new Date().toISOString(),
+        })
+        .eq('id', existing.id);
+      if (upErr) result.errors.push({ external_id: String(fd.id), message: upErr.message });
+      else result.updated++;
+      continue;
+    }
+
+    const { error: insErr } = await supabase.from('matches_staging').insert(proposed);
     if (insErr) {
       result.errors.push({ external_id: String(fd.id), message: insErr.message });
     } else {
