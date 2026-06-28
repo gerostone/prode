@@ -43,6 +43,8 @@ export function BracketForm({
   });
 
   const teamsByCode = useMemo(() => new Map(teams.map((t) => [t.code, t])), [teams]);
+  const matchById = useMemo(() => new Map(matches.map((m) => [m.id, m])), [matches]);
+  const constrain = config.constrainOutcome;
 
   const validation = useMemo(
     () => validateBracketCoherence(state, matches),
@@ -99,6 +101,20 @@ export function BracketForm({
   function setWinner(matchId: number, team_code: string) {
     setState((prev) => {
       const next = { ...prev, winners: { ...prev.winners, [matchId]: team_code } };
+      // Coherencia: si el resultado guardado contradice al nuevo ganador, lo limpiamos.
+      if (constrain) {
+        const m = matchById.get(matchId);
+        const cur = prev.outcomes[matchId];
+        const contradicts =
+          (team_code === m?.home_team_code && cur === 'away') ||
+          (team_code === m?.away_team_code && cur === 'home');
+        if (contradicts) {
+          const nextOutcomes = { ...prev.outcomes };
+          delete nextOutcomes[matchId];
+          next.outcomes = nextOutcomes;
+          scheduleSave('outcome', next);
+        }
+      }
       scheduleSave('winner', next);
       return next;
     });
@@ -149,6 +165,7 @@ export function BracketForm({
             onWinner={(v) => setWinner(m.id, v)}
             onOutcome={(v) => setOutcome(m.id, v)}
             readOnly={readOnly}
+            constrain={constrain}
           />
         ))}
       </div>

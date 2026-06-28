@@ -13,6 +13,7 @@ export function BracketMatchRow({
   onWinner,
   onOutcome,
   readOnly,
+  constrain = false,
 }: {
   match: Match;
   teamsByCode: Map<string, Team>;
@@ -21,10 +22,23 @@ export function BracketMatchRow({
   onWinner: (v: string) => void;
   onOutcome: (v: MatchOutcome) => void;
   readOnly: boolean;
+  constrain?: boolean;
 }) {
   const home = match.home_team_code ? teamsByCode.get(match.home_team_code) : null;
   const away = match.away_team_code ? teamsByCode.get(match.away_team_code) : null;
   const disabled = readOnly || !home || !away;
+
+  // Resultado bloqueado según el ganador elegido: si ganó el local, no puede ser
+  // "Visitante"; si ganó el visitante, no puede ser "Local". El empate (penales)
+  // siempre queda habilitado.
+  const blockedOutcome: MatchOutcome | null =
+    !constrain || !winner
+      ? null
+      : winner === match.home_team_code
+        ? 'away'
+        : winner === match.away_team_code
+          ? 'home'
+          : null;
 
   return (
     <Card>
@@ -77,22 +91,34 @@ export function BracketMatchRow({
                   { v: 'home' as const, label: 'Local' },
                   { v: 'draw' as const, label: 'Empate (penales)' },
                   { v: 'away' as const, label: 'Visitante' },
-                ].map(({ v, label }) => (
-                  <Label
-                    key={v}
-                    className="flex cursor-pointer items-center justify-center gap-1 rounded-md border p-2 text-xs hover:bg-accent has-[:checked]:border-primary has-[:checked]:bg-primary/5"
-                  >
-                    <input
-                      type="radio"
-                      name={`outcome-${match.id}`}
-                      value={v}
-                      checked={outcome === v}
-                      disabled={disabled}
-                      onChange={() => onOutcome(v)}
-                    />
-                    <span>{label}</span>
-                  </Label>
-                ))}
+                ].map(({ v, label }) => {
+                  const isBlocked = blockedOutcome === v;
+                  return (
+                    <Label
+                      key={v}
+                      title={
+                        isBlocked
+                          ? 'El ganador que elegiste no permite este resultado'
+                          : undefined
+                      }
+                      className={`flex items-center justify-center gap-1 rounded-md border p-2 text-xs ${
+                        isBlocked
+                          ? 'cursor-not-allowed border-dashed text-muted-foreground opacity-40'
+                          : 'cursor-pointer hover:bg-accent has-[:checked]:border-primary has-[:checked]:bg-primary/5'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name={`outcome-${match.id}`}
+                        value={v}
+                        checked={outcome === v}
+                        disabled={disabled || isBlocked}
+                        onChange={() => onOutcome(v)}
+                      />
+                      <span>{label}</span>
+                    </Label>
+                  );
+                })}
               </div>
             </div>
           </>
