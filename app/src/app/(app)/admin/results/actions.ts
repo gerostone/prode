@@ -50,11 +50,31 @@ export async function setMatchResult(input: z.infer<typeof setSchema>) {
     outcome_pre_penalties: match.outcome_pre_penalties,
     went_to_penalties: match.went_to_penalties,
   };
-  const patch = {
+
+  // OJO: outcome_pre_penalties lo computa el trigger compute_match_outcome a partir
+  // de los scores / went_to_penalties — si lo seteáramos directo, el trigger lo pisa.
+  // Por eso cargamos un marcador representativo que produce el resultado elegido. El
+  // scoring sólo lee winner_team_code + outcome_pre_penalties, así que el marcador
+  // exacto es indistinto (no se predice ni se muestra el resultado por goles).
+  const patch: Record<string, unknown> = {
     winner_team_code,
-    outcome_pre_penalties: outcome,
-    went_to_penalties: outcome === 'draw',
+    home_score_120: null,
+    away_score_120: null,
   };
+  if (outcome === 'home') {
+    patch.home_score_90 = 1;
+    patch.away_score_90 = 0;
+    patch.went_to_penalties = false;
+  } else if (outcome === 'away') {
+    patch.home_score_90 = 0;
+    patch.away_score_90 = 1;
+    patch.went_to_penalties = false;
+  } else {
+    // empate en 90'/120' definido por penales
+    patch.home_score_90 = 0;
+    patch.away_score_90 = 0;
+    patch.went_to_penalties = true;
+  }
 
   const { error: uErr } = await supabase.from('matches').update(patch).eq('id', match_id);
   if (uErr) {
@@ -98,9 +118,18 @@ export async function clearMatchResult(input: z.infer<typeof clearSchema>) {
     .eq('id', parsed.data.match_id)
     .single();
 
+  // Limpiamos también los scores: el trigger recomputa outcome_pre_penalties desde
+  // ellos, así que sin esto dejaría un resultado viejo en vez de null.
   const { error } = await supabase
     .from('matches')
-    .update({ winner_team_code: null, outcome_pre_penalties: null, went_to_penalties: false })
+    .update({
+      winner_team_code: null,
+      went_to_penalties: false,
+      home_score_90: null,
+      away_score_90: null,
+      home_score_120: null,
+      away_score_120: null,
+    })
     .eq('id', parsed.data.match_id);
   if (error) {
     console.error('clearMatchResult error:', error);
