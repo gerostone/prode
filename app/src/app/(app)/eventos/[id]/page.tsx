@@ -3,12 +3,15 @@ import { requireUser } from '@/lib/auth';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { loadEvent1State } from '@/lib/predictions';
 import { loadBracketState } from '@/lib/bracket-predictions';
+import { loadEvent1Results, loadBracketResults } from '@/lib/event-verdicts';
 import { BRACKET_CONFIGS } from '@/lib/bracket-types';
 import type { Event, Team, Player, Match } from '@/lib/database.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminToggle } from './admin-toggle';
 import { Event1Form } from './event-1-form';
+import { Event1Results } from './event-1-results';
 import { BracketForm } from './bracket-form';
+import { BracketResults } from './bracket-results';
 
 export default async function EventoPage({ params }: { params: { id: string } }) {
   const eventIdNum = Number(params.id);
@@ -56,14 +59,25 @@ export default async function EventoPage({ params }: { params: { id: string } })
   }
 
   if (eventIdNum === 1) {
-    const [teamsRes, playersRes, state] = await Promise.all([
+    const [teamsRes, playersRes] = await Promise.all([
       supabase.from('teams').select('*').order('group_code').order('name'),
       supabase.from('players').select('*').order('display_order'),
-      loadEvent1State(user.id),
     ]);
     const teams = (teamsRes.data ?? []) as Team[];
     const players = (playersRes.data ?? []) as Player[];
 
+    // Evento scoreado: en vez del form (deshabilitado) mostramos los aciertos.
+    if (event.status === 'scored') {
+      const results = await loadEvent1Results(user.id, teams, players);
+      return (
+        <div className="space-y-6">
+          {header}
+          <Event1Results data={results} />
+        </div>
+      );
+    }
+
+    const state = await loadEvent1State(user.id);
     return (
       <div className="space-y-6">
         {header}
@@ -79,16 +93,28 @@ export default async function EventoPage({ params }: { params: { id: string } })
 
   // Eventos 2/3/4
   const config = BRACKET_CONFIGS[eventIdNum];
-  const [matchesRes, teamsRes, state] = await Promise.all([
+  const [matchesRes, teamsRes] = await Promise.all([
     supabase
       .from('matches').select('*')
       .eq('stage', config.stage)
       .order('bracket_slot'),
     supabase.from('teams').select('*').order('name'),
-    loadBracketState(user.id, eventIdNum),
   ]);
   const matches = (matchesRes.data ?? []) as Match[];
   const teams = (teamsRes.data ?? []) as Team[];
+
+  // Evento scoreado: mostramos los aciertos por partido en vez del form.
+  if (event.status === 'scored') {
+    const results = await loadBracketResults(user.id, eventIdNum, matches, teams);
+    return (
+      <div className="space-y-6">
+        {header}
+        <BracketResults data={results} />
+      </div>
+    );
+  }
+
+  const state = await loadBracketState(user.id, eventIdNum);
 
   return (
     <div className="space-y-6">
