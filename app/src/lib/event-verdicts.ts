@@ -92,8 +92,25 @@ export async function loadEvent1Results(
   for (const t of teams) {
     if (t.group_position === 1 && t.group_code) groupHasWinner.add(t.group_code);
   }
-  const teamResolved = (code: string | null) =>
-    !!code && (teamByCode.get(code)?.eliminated_at_stage ?? null) !== null;
+
+  // "Frente" del torneo: el rank de etapa más avanzado alcanzado por algún equipo.
+  // Un equipo está ELIMINADO (terminal) solo si su etapa quedó POR DEBAJO del frente.
+  // Si está en el frente, sigue vivo → su suerte en rondas posteriores es PENDIENTE.
+  // Ej: con todos los clasificados en 'r32', Argentina (r32) sigue viva, así que su
+  // pick de campeón es pendiente, no error. Cuando se cargue R32 y avancen a 'r16',
+  // los que cayeron en R32 pasan a terminal y sus picks posteriores se marcan ✗.
+  const STAGE_RANK: Record<string, number> = {
+    group: 0, r32: 1, r16: 2, qf: 3, sf: 4, final: 5, champion: 6,
+  };
+  const rankOf = (s: string | null) => (s && s in STAGE_RANK ? STAGE_RANK[s] : -1);
+  let maxRank = -1;
+  for (const t of teams) maxRank = Math.max(maxRank, rankOf(t.eliminated_at_stage));
+  const teamTerminal = (code: string | null) => {
+    if (!code) return false;
+    const r = rankOf(teamByCode.get(code)?.eliminated_at_stage ?? null);
+    return r >= 0 && r < maxRank;
+  };
+
   const topScorerResolved = players.some((p) => p.is_top_scorer);
 
   const teamName = (code: string | null) => (code && teamByCode.get(code)?.name) || code || '—';
@@ -138,7 +155,7 @@ export async function loadEvent1Results(
         break;
       }
       case 'playoff_team': {
-        const v = verdictOf(r.is_correct, teamResolved(r.team_code));
+        const v = verdictOf(r.is_correct, teamTerminal(r.team_code));
         bump(v);
         out.playoffTeams.push({
           key: `pt-${r.team_code}`,
@@ -151,7 +168,7 @@ export async function loadEvent1Results(
         break;
       }
       case 'semifinalist': {
-        const v = verdictOf(r.is_correct, teamResolved(r.team_code));
+        const v = verdictOf(r.is_correct, teamTerminal(r.team_code));
         bump(v);
         out.semifinalists.push({
           key: `sf-${r.team_code}`,
@@ -164,7 +181,7 @@ export async function loadEvent1Results(
         break;
       }
       case 'finalist': {
-        const v = verdictOf(r.is_correct, teamResolved(r.team_code));
+        const v = verdictOf(r.is_correct, teamTerminal(r.team_code));
         bump(v);
         out.finalist = {
           key: 'finalist',
@@ -177,7 +194,7 @@ export async function loadEvent1Results(
         break;
       }
       case 'champion': {
-        const v = verdictOf(r.is_correct, teamResolved(r.team_code));
+        const v = verdictOf(r.is_correct, teamTerminal(r.team_code));
         bump(v);
         out.champion = {
           key: 'champion',
