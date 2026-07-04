@@ -166,6 +166,7 @@ export function BracketForm({
             onOutcome={(v) => setOutcome(m.id, v)}
             readOnly={readOnly}
             constrain={constrain}
+            locked={m.winner_team_code !== null}
           />
         ))}
       </div>

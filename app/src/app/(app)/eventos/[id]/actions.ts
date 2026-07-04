@@ -75,6 +75,37 @@ export async function saveSection(input: z.infer<typeof saveSectionSchema>) {
   });
   if (wrong) return { error: 'Pick no coincide con el kind de la sección.' };
 
+  // Partidos con resultado ya cargado quedan LOCKEADOS: aunque el evento esté abierto,
+  // no se puede cambiar ni agregar su pronóstico. Preservamos lo ya guardado y
+  // descartamos cualquier cambio entrante sobre ellos (defensa server-side).
+  let picksToSave = parsed.data.picks;
+  if (isMatchWinnerKind || isOutcomeKind) {
+    const { data: lockedMatches } = await supabase
+      .from('matches')
+      .select('id')
+      .not('winner_team_code', 'is', null);
+    const lockedIds = new Set((lockedMatches ?? []).map((m) => m.id as number));
+
+    if (lockedIds.size > 0) {
+      const { data: existing } = await supabase
+        .from('predictions')
+        .select('match_id, team_code, outcome')
+        .eq('user_id', user.id)
+        .eq('event_id', parsed.data.event_id)
+        .eq('kind', k);
+      const existingByMatch = new Map((existing ?? []).map((r) => [r.match_id as number, r]));
+
+      const kept = parsed.data.picks.filter((p) => !p.match_id || !lockedIds.has(p.match_id));
+      for (const id of lockedIds) {
+        const ex = existingByMatch.get(id);
+        if (!ex) continue;
+        if (isMatchWinnerKind && ex.team_code) kept.push({ match_id: id, team_code: ex.team_code });
+        else if (isOutcomeKind && ex.outcome) kept.push({ match_id: id, outcome: ex.outcome });
+      }
+      picksToSave = kept;
+    }
+  }
+
   // Replace-by-kind: delete + insert
   const { error: dErr } = await supabase
     .from('predictions')
@@ -87,8 +118,8 @@ export async function saveSection(input: z.infer<typeof saveSectionSchema>) {
     return { error: 'No se pudo guardar tu pronóstico.' };
   }
 
-  if (parsed.data.picks.length > 0) {
-    const rows = parsed.data.picks.map((p) => ({
+  if (picksToSave.length > 0) {
+    const rows = picksToSave.map((p) => ({
       user_id: user.id,
       event_id: parsed.data.event_id,
       kind: parsed.data.kind,

@@ -14,6 +14,7 @@ export function BracketMatchRow({
   onOutcome,
   readOnly,
   constrain = false,
+  locked = false,
 }: {
   match: Match;
   teamsByCode: Map<string, Team>;
@@ -23,10 +24,13 @@ export function BracketMatchRow({
   onOutcome: (v: MatchOutcome) => void;
   readOnly: boolean;
   constrain?: boolean;
+  locked?: boolean;
 }) {
   const home = match.home_team_code ? teamsByCode.get(match.home_team_code) : null;
   const away = match.away_team_code ? teamsByCode.get(match.away_team_code) : null;
-  const disabled = readOnly || !home || !away;
+  // locked: el partido ya tiene resultado cargado → no se puede editar, aunque el
+  // evento esté abierto. Congela el pronóstico ya guardado (fairness).
+  const disabled = readOnly || locked || !home || !away;
 
   // Resultado bloqueado según el ganador elegido: si ganó el local, no puede ser
   // "Visitante"; si ganó el visitante, no puede ser "Local". El empate (penales)
@@ -43,14 +47,20 @@ export function BracketMatchRow({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex items-center justify-between gap-2">
           <span>{match.bracket_slot}</span>
-          {match.scheduled_at && (
-            <span className="text-xs font-normal text-muted-foreground">
-              {new Date(match.scheduled_at).toLocaleString('es-AR', {
-                day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
-              })}
+          {locked ? (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              🔒 Cerrado — ya se jugó
             </span>
+          ) : (
+            match.scheduled_at && (
+              <span className="text-xs font-normal text-muted-foreground">
+                {new Date(match.scheduled_at).toLocaleString('es-AR', {
+                  day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+                })}
+              </span>
+            )
           )}
         </CardTitle>
       </CardHeader>
